@@ -1,0 +1,15 @@
+megs : 64
+
+romimage: file=/home/return/Desktop/Project/bochs/share/bochs/BIOS-bochs-latest
+vgaromimage: file=/home/return/Desktop/Project/bochs/share/bochs/VGABIOS-lgpl-latest
+
+boot: disk
+
+log: bochs.out
+
+mouse:enabled=0
+keyboard:keymap=/home/return/Desktop/Project/bochs/share/bochs/keymaps/x11-pc-us.map
+
+ata0:enabled=1,ioaddr1=0x1f0,ioaddr2=0x3f0,irq=14
+
+ata0-master: type=disk, path="hd64M.img", mode=flat,cylinders=130,heads=16,spt=63

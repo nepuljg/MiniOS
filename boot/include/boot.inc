@@ -1,0 +1,58 @@
+LOADER_BASE_ADDR equ 0x900
+LOADER_STACK_TOP equ LOADER_BASE_ADDR
+LOADER_START_SECTOR equ 0x2
+
+KERNEL_BIN_BASE_ADDR equ 0x70000
+KERNEL_START_SECTOR equ 0x9
+KERNEL_ENTRY_POINT equ 0xc0001500
+
+;段描述符中一些属性
+DESC_G_4K equ  1_0000_0000_0000_0000_0000_000b  ;高32位的第23位G:代表粒度
+DESC_D_32 equ   1_0000_0000_0000_0000_0000_00b ;在高32位的第22位D/B：代表是不是32位的操作数
+DESC_L    equ    0_0000_0000_0000_0000_0000_0b  ;在高32位的第21位L:代表在不在内存中
+DESC_AVL  equ     0_0000_0000_0000_0000_0000b ;在高32位的第20位AVL:操作系统管理，不需要管
+
+DESC_LIMIT_CODE2  equ 1111_0000_0000_0000_0000b ;代码段的段界限的第二部分
+DESC_LIMIT_DATA2  equ DESC_LIMIT_CODE2
+DESC_LIMIT_VIDEO2 equ 0000_0000_0000_0000_0000b
+DESC_P equ  1_000000000000000b                  ;表示段存在
+DESC_DPL_0 equ 00_0000_0000_00000b                ;表示内存段的特权级
+DESC_DPL_1 equ 01_0000_0000_00000b                ;表示内存段的特权级
+DESC_DPL_2 equ 10_0000_0000_00000b                ;表示内存段的特权级
+DESC_DPL_3 equ 11_0000_0000_00000b                ;表示内存段的特权级
+DESC_S_CODE equ 1_0000_0000_0000b               ;系统段
+DESC_S_DATA   equ DESC_S_CODE                   ;系统段
+DESC_S_sys equ 0_0000_0000_0000b                ;系统段
+DESC_TYPE_CODE equ 1000_0000_0000b              ;用来指定描述符的类型
+DESC_TYPE_DATA equ 0010_0000_0000b
+DESC_CODE_HIGH4 equ (0x00<<24)+DESC_G_4K+DESC_D_32+ \
+DESC_L+DESC_AVL+DESC_LIMIT_CODE2+ \
+DESC_P+DESC_DPL_0+DESC_S_CODE+DESC_TYPE_CODE+0x00
+
+DESC_DATA_HIGH4 equ (0x00<<24)+DESC_G_4K+DESC_D_32+ \
+DESC_L+DESC_AVL+DESC_LIMIT_DATA2+DESC_P+DESC_DPL_0+DESC_S_DATA+ \
+DESC_TYPE_DATA +0X00
+
+DESC_VIDEO_HIGH4 equ (0x00<<24)+DESC_G_4K+DESC_D_32+ \
+DESC_L+DESC_AVL+DESC_LIMIT_VIDEO2+DESC_P+ \
+DESC_DPL_0+DESC_S_DATA+DESC_TYPE_DATA+0X0b
+;-----页表配置-----------
+PAGE_DIR_TABLE_POS equ 0x100000
+
+;-----选择子属性------------
+RPL0 equ 00b 
+RPL1 equ 01b 
+RPL2 equ 10b 
+RPL3 equ 11b 
+TI_GDT  equ 000b 
+TI_LDT  equ 100b 
+
+;---页表相关属性
+PG_P equ 1b 
+PG_RW_R equ 00b 
+PG_RW_W equ 10b 
+PG_US_S equ 000b 
+PG_US_U equ 100b 
+
+;----------program type 定义
+PT_NULL equ 0
