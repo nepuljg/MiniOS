@@ -1,6 +1,6 @@
 #include "string.h"
-#include "../kernel/global.h"
-#include "../kernel/debug.h"
+#include "global.h"
+#include "debug.h"
 
 /* 将dst_起始的size个字节置为value */
 void memset(void* dst_, uint8_t value, uint32_t size) {
@@ -26,7 +26,7 @@ int memcmp(const void* a_, const void* b_, uint32_t size) {
    ASSERT(a != NULL || b != NULL);
    while (size-- > 0) {
       if(*a != *b) {
-	 return *a > *b ? 1 : -1; 
+	      return *a > *b ? 1 : -1; 
       }
       a++;
       b++;

@@ -1,5 +1,5 @@
 #include "list.h"
-#include "../../kernel/interrupt.h"
+#include "interrupt.h"
 
 /* 初始化双向链表list */
 void list_init (struct list* list) {
@@ -11,7 +11,7 @@ void list_init (struct list* list) {
 
 /* 把链表元素elem插入在元素before之前 */
 void list_insert_before(struct list_elem* before, struct list_elem* elem) { 
-   enum intr_status old_status = intr_disable();  //原子操作，开中断和关中断
+   enum intr_status old_status = intr_disable();
 
 /* 将before前驱元素的后继元素更新为elem, 暂时使before脱离链表*/ 
    before->prev->next = elem; 
@@ -59,14 +59,10 @@ bool elem_find(struct list* plist, struct list_elem* obj_elem) {
    struct list_elem* elem = plist->head.next;
    while (elem != &plist->tail) {
       if (elem == obj_elem) {
-        //put_str("\ntrue\n");
-       // while(1);
-	    return true;
+	 return true;
       }
       elem = elem->next;
    }
-   //put_str("\nfalse\n");
-   //while(1);
    return false;
 }
 

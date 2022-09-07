@@ -6,13 +6,12 @@
 #include "interrupt.h"
 #include "print.h"
 #include "memory.h"
-#include "process.h"
-#include "sync.h"
+
+#define PG_SIZE 4096
 
 struct task_struct* main_thread;    // 主线程PCB
 struct list thread_ready_list;	    // 就绪队列
 struct list thread_all_list;	    // 所有任务队列
-struct lock pid_lock;		    // 分配pid锁
 static struct list_elem* thread_tag;// 用于保存队列中的线程结点
 
 extern void switch_to(struct task_struct* cur, struct task_struct* next);
@@ -32,15 +31,6 @@ static void kernel_thread(thread_func* function, void* func_arg) {
    function(func_arg); 
 }
 
-/* 分配pid */
-static pid_t allocate_pid(void) {
-   static pid_t next_pid = 0;
-   lock_acquire(&pid_lock);
-   next_pid++;
-   lock_release(&pid_lock);
-   return next_pid;
-}
-
 /* 初始化线程栈thread_stack,将待执行的函数和参数放到thread_stack中相应的位置 */
 void thread_create(struct task_struct* pthread, thread_func function, void* func_arg) {
    /* 先预留中断使用栈的空间,可见thread.h中定义的结构 */
@@ -58,7 +48,6 @@ void thread_create(struct task_struct* pthread, thread_func function, void* func
 /* 初始化线程基本信息 */
 void init_thread(struct task_struct* pthread, char* name, int prio) {
    memset(pthread, 0, sizeof(*pthread));
-   pthread->pid = allocate_pid();
    strcpy(pthread->name, name);
 
    if (pthread == main_thread) {
@@ -133,38 +122,7 @@ void schedule() {
    thread_tag = list_pop(&thread_ready_list);   
    struct task_struct* next = elem2entry(struct task_struct, general_tag, thread_tag);
    next->status = TASK_RUNNING;
-
-   /* 击活任务页表等 */
-   process_activate(next);
-
    switch_to(cur, next);
-}
-
-/* 当前线程将自己阻塞,标志其状态为stat. */
-void thread_block(enum task_status stat) {
-/* stat取值为TASK_BLOCKED,TASK_WAITING,TASK_HANGING,也就是只有这三种状态才不会被调度*/
-   ASSERT(((stat == TASK_BLOCKED) || (stat == TASK_WAITING) || (stat == TASK_HANGING)));
-   enum intr_status old_status = intr_disable();
-   struct task_struct* cur_thread = running_thread();
-   cur_thread->status = stat; // 置其状态为stat 
-   schedule();		      // 将当前线程换下处理器
-/* 待当前线程被解除阻塞后才继续运行下面的intr_set_status */
-   intr_set_status(old_status);
-}
-
-/* 将线程pthread解除阻塞 */
-void thread_unblock(struct task_struct* pthread) {
-   enum intr_status old_status = intr_disable();
-   ASSERT(((pthread->status == TASK_BLOCKED) || (pthread->status == TASK_WAITING) || (pthread->status == TASK_HANGING)));
-   if (pthread->status != TASK_READY) {
-      ASSERT(!elem_find(&thread_ready_list, &pthread->general_tag));
-      if (elem_find(&thread_ready_list, &pthread->general_tag)) {
-	 PANIC("thread_unblock: blocked thread in ready_list\n");
-      }
-      list_push(&thread_ready_list, &pthread->general_tag);    // 放到队列的最前面,使其尽快得到调度
-      pthread->status = TASK_READY;
-   } 
-   intr_set_status(old_status);
 }
 
 /* 初始化线程环境 */
@@ -172,7 +130,6 @@ void thread_init(void) {
    put_str("thread_init start\n");
    list_init(&thread_ready_list);
    list_init(&thread_all_list);
-   lock_init(&pid_lock);
 /* 将当前main函数创建为线程 */
    make_main_thread();
    put_str("thread_init done\n");

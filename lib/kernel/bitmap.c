@@ -1,9 +1,9 @@
 #include "bitmap.h"
-#include "../stdint.h"
-#include "../string.h"
+#include "stdint.h"
+#include "string.h"
 #include "print.h"
-#include "../../kernel/interrupt.h"
-#include "../../kernel/debug.h"
+#include "interrupt.h"
+#include "debug.h"
 
 /* 将位图btmp初始化 */
 void bitmap_init(struct bitmap* btmp) {
@@ -11,7 +11,7 @@ void bitmap_init(struct bitmap* btmp) {
 }
 
 /* 判断bit_idx位是否为1,若为1则返回true，否则返回false */
-int bitmap_scan_test(struct bitmap* btmp, uint32_t bit_idx) {
+bool bitmap_scan_test(struct bitmap* btmp, uint32_t bit_idx) {
    uint32_t byte_idx = bit_idx / 8;    // 向下取整用于索引数组下标
    uint32_t bit_odd  = bit_idx % 8;    // 取余用于索引数组内的位
    return (btmp->bits[byte_idx] & (BITMAP_MASK << bit_odd));
@@ -51,13 +51,13 @@ int bitmap_scan(struct bitmap* btmp, uint32_t cnt) {
    bit_idx_start = -1;	      // 先将其置为-1,若找不到连续的位就直接返回
    while (bit_left-- > 0) {
       if (!(bitmap_scan_test(btmp, next_bit))) {	 // 若next_bit为0
-	 count++;
+	      count++;
       } else {
-	 count = 0;
+	      count = 0;
       }
       if (count == cnt) {	    // 若找到连续的cnt个空位
-	 bit_idx_start = next_bit - cnt + 1;
-	 break;
+	      bit_idx_start = next_bit - cnt + 1;
+	      break;
       }
       next_bit++;          
    }
